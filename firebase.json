@@ -1,8 +1,10 @@
 {
   "hosting": {
+    "site": "asciigenerator",
     "public": "dist",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "**/.*",
       "**/node_modules/**"
     ],
@@ -14,4 +16,3 @@
     ]
   }
 }
-
