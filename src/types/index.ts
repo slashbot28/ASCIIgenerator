@@ -5,7 +5,9 @@ export type ConverterMode =
   | 'gif'
   | 'text'
   | '3d'
-  | 'audio';
+  | 'audio'
+  | 'qr'
+  | 'paint';
 
 export type TextTab = 'text' | 'font' | 'layout' | 'style' | 'animate';
 
@@ -101,6 +103,7 @@ export interface AppState {
   rotationSpeed: number;
   zoom3D: number;
   wireframe3D: boolean;
+  autoSpin3D: boolean;
   
   // Audio state
   audioActive: boolean;
@@ -114,5 +117,13 @@ export interface AppState {
   
   // Tokens & Premium
   tokens: number;
-}
 
+  // QR Code Mode state
+  qrText: string;
+
+  // ASCII Paint Mode state
+  paintTool: 'brush' | 'eraser' | 'fill';
+  paintChar: string;
+  paintColor: string;
+  paintGrid: AsciiCell[][];
+}

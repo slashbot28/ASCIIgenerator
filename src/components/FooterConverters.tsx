@@ -17,6 +17,8 @@ export const FooterConverters: React.FC<FooterConvertersProps> = ({
     { id: 'gif', label: 'GIF naar ASCII' },
     { id: 'text', label: 'Tekst naar ASCII' },
     { id: '3d', label: '3D ASCII-art' },
+    { id: 'qr', label: 'QR-Code Maker' },
+    { id: 'paint', label: 'ASCII Paint' },
     { id: 'audio', label: 'Audiovisualizer' }
   ];
 
@@ -44,4 +46,3 @@ export const FooterConverters: React.FC<FooterConvertersProps> = ({
     </footer>
   );
 };
-

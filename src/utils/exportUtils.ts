@@ -1,4 +1,5 @@
 import confetti from 'canvas-confetti';
+import gifshot from 'gifshot';
 import type { AsciiCell, EffectType, GlowColor } from '../types';
 
 export function fireConfetti() {
@@ -63,10 +64,80 @@ export async function copyHtml(grid: AsciiCell[][]): Promise<boolean> {
     fireConfetti();
     return true;
   } catch {
-    // Fallback to text copy
     const plain = grid.map(r => r.map(c => c.char).join('')).join('\n');
     return copyPlainText(plain);
   }
+}
+
+// Helper: map hex color to closest Discord ANSI escape code
+function getDiscordAnsiColor(hexColor?: string): number {
+  if (!hexColor) return 37; // default white
+  const c = hexColor.replace('#', '');
+  const r = parseInt(c.slice(0, 2), 16) || 0;
+  const g = parseInt(c.slice(2, 4), 16) || 0;
+  const b = parseInt(c.slice(4, 6), 16) || 0;
+
+  // Discord ANSI Palette reference points:
+  // 30: Dark Gray, 31: Red, 32: Green, 33: Yellow/Gold, 34: Blue, 35: Pink/Magenta, 36: Cyan, 37: White
+  const ansiPalette: { code: number; r: number; g: number; b: number }[] = [
+    { code: 30, r: 79, g: 84, b: 92 },
+    { code: 31, r: 237, g: 66, b: 69 },
+    { code: 32, r: 87, g: 242, b: 135 },
+    { code: 33, r: 254, g: 231, b: 92 },
+    { code: 34, r: 88, g: 101, b: 242 },
+    { code: 35, r: 235, g: 69, b: 158 },
+    { code: 36, r: 59, g: 165, b: 92 },
+    { code: 37, r: 255, g: 255, b: 255 }
+  ];
+
+  let bestCode = 37;
+  let minDistance = Infinity;
+
+  for (const p of ansiPalette) {
+    const dist = Math.pow(r - p.r, 2) + Math.pow(g - p.g, 2) + Math.pow(b - p.b, 2);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestCode = p.code;
+    }
+  }
+
+  return bestCode;
+}
+
+// Generate Discord ANSI formatted codeblock
+export function generateDiscordAnsi(grid: AsciiCell[][]): string {
+  let result = '```ansi\n';
+
+  for (const row of grid) {
+    let currentAnsi = -1;
+    for (const cell of row) {
+      if (cell.char === ' ') {
+        result += ' ';
+        continue;
+      }
+      const ansiCode = getDiscordAnsiColor(cell.color);
+      if (ansiCode !== currentAnsi) {
+        result += `\u001b[0;${ansiCode}m`;
+        currentAnsi = ansiCode;
+      }
+      result += cell.char;
+    }
+    if (currentAnsi !== -1) {
+      result += '\u001b[0m';
+    }
+    result += '\n';
+  }
+
+  result += '```';
+  return result;
+}
+
+// Copy Discord ANSI to clipboard
+export async function copyDiscordAnsi(grid: AsciiCell[][]): Promise<boolean> {
+  const ansiText = generateDiscordAnsi(grid);
+  const ok = await copyPlainText(ansiText);
+  if (ok) fireConfetti();
+  return ok;
 }
 
 // Download Plain Text File
@@ -81,7 +152,7 @@ export function downloadTextFile(text: string, filename = 'asciicraft-art.txt') 
   fireConfetti();
 }
 
-// Render Grid to Canvas for PNG / WebP export
+// Render Grid to Canvas for PNG / WebP / Frame export
 export function renderGridToCanvas(
   grid: AsciiCell[][],
   options: {
@@ -230,7 +301,6 @@ export function downloadSvg(
       const x = padding + c * charWidth;
       const y = padding + r * lineHeight + fontSize;
       const fill = cell.color || '#3ee087';
-      // Escaping XML special chars
       const safeChar = cell.char === '&' ? '&amp;' : cell.char === '<' ? '&lt;' : cell.char === '>' ? '&gt;' : cell.char;
       svgContent += `<text x="${x}" y="${y}" fill="${fill}" class="t">${safeChar}</text>`;
     }
@@ -248,3 +318,104 @@ export function downloadSvg(
   fireConfetti();
 }
 
+// Record Animated WebM Video Clip
+export async function recordWebmVideo(
+  getFrameGrid: () => AsciiCell[][],
+  durationMs = 3000,
+  options?: { effect?: EffectType; glow?: GlowColor },
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  const initialCanvas = renderGridToCanvas(getFrameGrid(), options);
+  const canvas = document.createElement('canvas');
+  canvas.width = initialCanvas.width;
+  canvas.height = initialCanvas.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const stream = canvas.captureStream(30);
+  const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  const chunks: Blob[] = [];
+
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
+  const startTime = Date.now();
+
+  const renderInterval = setInterval(() => {
+    const frame = renderGridToCanvas(getFrameGrid(), options);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(frame, 0, 0);
+
+    const elapsed = Date.now() - startTime;
+    if (onProgress) {
+      onProgress(Math.min(1, elapsed / durationMs));
+    }
+  }, 1000 / 30);
+
+  mediaRecorder.start();
+
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      clearInterval(renderInterval);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'asciicraft-animation.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+        fireConfetti();
+        resolve();
+      };
+      mediaRecorder.stop();
+    }, durationMs);
+  });
+}
+
+// Export Animated GIF using gifshot
+export async function exportAnimatedGif(
+  getFrameGrid: () => AsciiCell[][],
+  frameCount = 16,
+  frameInterval = 0.1,
+  options?: { effect?: EffectType; glow?: GlowColor },
+  onProgress?: (percent: number) => void
+): Promise<void> {
+  const frames: string[] = [];
+
+  for (let i = 0; i < frameCount; i++) {
+    const canvas = renderGridToCanvas(getFrameGrid(), options);
+    frames.push(canvas.toDataURL('image/png'));
+    if (onProgress) {
+      onProgress(Math.round(((i + 1) / frameCount) * 50));
+    }
+    await new Promise((r) => setTimeout(r, 60));
+  }
+
+  return new Promise((resolve, reject) => {
+    gifshot.createGIF(
+      {
+        images: frames,
+        interval: frameInterval,
+        numFrames: frameCount,
+        gifWidth: 480,
+        gifHeight: 320,
+        sampleInterval: 10
+      },
+      (obj) => {
+        if (!obj.error) {
+          const a = document.createElement('a');
+          a.href = obj.image;
+          a.download = 'asciicraft-animation.gif';
+          a.click();
+          fireConfetti();
+          if (onProgress) onProgress(100);
+          resolve();
+        } else {
+          reject(new Error(obj.errorMsg || 'Failed to generate GIF'));
+        }
+      }
+    );
+  });
+}
