@@ -229,6 +229,23 @@ export function renderGridToCanvas(
         ctx.fillText(cell.char, x - 1, y - 1);
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillText(cell.char, x + 1, y + 1);
+      } else if (effect === 'shadow') {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillText(cell.char, x + 4, y + 4);
+      } else if (effect === 'chroma') {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+        ctx.fillText(cell.char, x - 2, y);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
+        ctx.fillText(cell.char, x + 2, y);
+      } else if (effect === 'fire') {
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(255, 60, 0, 0.8)';
+        ctx.fillText(cell.char, x, y - 2);
+      } else if (effect === 'outline') {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(cell.char, x, y);
       }
 
       ctx.fillStyle = cell.color || '#3ee087';

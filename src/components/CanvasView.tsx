@@ -77,7 +77,9 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
     'rainbow', 'synthwave', 'cyberpunk', 'matrix', 'sunset', 'fire', 'ice', 'toxic', 'neonPink', 'gold', 'monochrome', 'hacker', 'pastel'
   ];
   const DIRECTIONS: GradientDirection[] = ['horizontal', 'vertical', 'diagonal', 'radial'];
-  const EFFECTS: EffectType[] = ['none', '3d', 'glow', 'glitch', 'emboss', 'shadow'];
+  const EFFECTS: EffectType[] = [
+    'none', '3d', 'glow', 'glitch', 'emboss', 'shadow', 'hologram', 'fire', 'chroma', 'outline'
+  ];
   const GLOWS: GlowColor[] = ['none', 'neon pink', 'cyan', 'green', 'gold', 'violet', 'white'];
 
   const cyclePrev = <T,>(arr: T[], current: T, setter: (val: T) => void) => {
@@ -239,6 +241,11 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
   const getEffectClass = (): string => {
     if (state.effect === '3d') return 'effect-3d';
     if (state.effect === 'emboss') return 'effect-emboss';
+    if (state.effect === 'shadow') return 'effect-shadow';
+    if (state.effect === 'hologram') return 'effect-hologram';
+    if (state.effect === 'fire') return 'effect-fire';
+    if (state.effect === 'chroma') return 'effect-chroma';
+    if (state.effect === 'outline') return 'effect-outline';
     return '';
   };
 

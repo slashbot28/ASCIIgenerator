@@ -444,22 +444,43 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
       {/* 3D MODE CONTROLS */}
       {state.mode === '3d' && (
         <div className="flex flex-col gap-3 font-mono">
+          {/* 3D Custom Text Input */}
+          <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-[#162018] border border-[#2d402f]">
+            <div className="flex justify-between items-center text-[11px]">
+              <label className="text-[#f5a623] font-semibold">Jouw 3D Tekst</label>
+              <span className="text-[10px] text-[#6e8473]">Draait in 3D ruimte</span>
+            </div>
+            <input 
+              type="text" 
+              value={state.text3D}
+              onChange={(e) => updateState({ text3D: e.target.value })}
+              placeholder="bv. ASCIICRAFT"
+              className="w-full bg-[#101712] border border-[#273729] rounded p-2 text-xs text-[#e6f2e4] focus:border-[#f5a623] focus:outline-none"
+            />
+          </div>
+
           <label className="text-[11px] text-[#8ea291]">3D Vorm Selector</label>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
             {[
-              { id: 'torus', label: 'Donut (Torus)' },
-              { id: 'cube', label: 'Kubus 3D' },
-              { id: 'sphere', label: 'Bol (Sphere)' },
-              { id: 'dna', label: 'DNA Helix' },
-              { id: 'pyramid', label: 'Piramide' }
+              { id: 'textRing', label: '🪐 3D Tekstring' },
+              { id: 'textBanner', label: '📜 3D Tekstbord' },
+              { id: 'diamond', label: '💎 Diamant 3D' },
+              { id: 'tunnel', label: '🌀 Cyber Tunnel' },
+              { id: 'heart', label: '❤️ Hart 3D' },
+              { id: 'star', label: '⭐ Ster / Galaxy' },
+              { id: 'torus', label: '🍩 Donut (Torus)' },
+              { id: 'cube', label: '🧊 Kubus 3D' },
+              { id: 'sphere', label: '🔮 Bol (Sphere)' },
+              { id: 'dna', label: '🧬 DNA Helix' },
+              { id: 'pyramid', label: '🔺 Piramide' }
             ].map(s => (
               <button
                 key={s.id}
                 onClick={() => updateState({ shape3D: s.id as Shape3D })}
                 className={`p-2 text-left text-xs rounded border transition-all ${
                   state.shape3D === s.id
-                    ? 'bg-[#1d291f] text-[#3ee087] border-[#3ee087]'
-                    : 'bg-[#151c16] text-[#9bb0a0] border-[#253527]'
+                    ? 'bg-[#1d291f] text-[#3ee087] border-[#3ee087] font-semibold'
+                    : 'bg-[#151c16] text-[#9bb0a0] border-[#253527] hover:border-[#384c3a]'
                 }`}
               >
                 {s.label}

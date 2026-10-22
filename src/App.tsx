@@ -64,7 +64,8 @@ export function App() {
     loop: true,
 
     // 3D
-    shape3D: 'torus',
+    shape3D: 'textRing',
+    text3D: 'ASCIICRAFT',
     rotationSpeed: 1,
     zoom3D: 1,
     wireframe3D: false,
@@ -119,11 +120,12 @@ export function App() {
       rotRef.current.y,
       65,
       32,
-      state.zoom3D
+      state.zoom3D,
+      state.text3D
     );
     const grid = colorizeAsciiText(asciiStr, state.colorTheme, state.direction);
     setDynamicAscii({ text: asciiStr, grid });
-  }, [state.shape3D, state.zoom3D, state.colorTheme, state.direction]);
+  }, [state.shape3D, state.zoom3D, state.colorTheme, state.direction, state.text3D]);
 
   // Feature D: ASCII Paint handlers
   const handlePaintCell = useCallback((row: number, col: number) => {
@@ -241,7 +243,8 @@ export function App() {
           rotRef.current.y,
           65,
           32,
-          state.zoom3D
+          state.zoom3D,
+          state.text3D
         );
         const grid = colorizeAsciiText(asciiStr, state.colorTheme, state.direction);
         setDynamicAscii({ text: asciiStr, grid });
@@ -255,7 +258,7 @@ export function App() {
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       };
     }
-  }, [state.mode, state.shape3D, state.rotationSpeed, state.zoom3D, state.colorTheme, state.direction, state.autoSpin3D]);
+  }, [state.mode, state.shape3D, state.rotationSpeed, state.zoom3D, state.colorTheme, state.direction, state.autoSpin3D, state.text3D]);
 
   // Feature C: QR-Code Generator Loop
   useEffect(() => {

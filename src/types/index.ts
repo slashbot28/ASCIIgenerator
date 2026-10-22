@@ -28,7 +28,17 @@ export type ColorTheme =
 
 export type GradientDirection = 'horizontal' | 'vertical' | 'diagonal' | 'radial';
 
-export type EffectType = 'none' | '3d' | 'glow' | 'glitch' | 'emboss' | 'shadow';
+export type EffectType = 
+  | 'none' 
+  | '3d' 
+  | 'glow' 
+  | 'glitch' 
+  | 'emboss' 
+  | 'shadow'
+  | 'hologram'
+  | 'fire'
+  | 'chroma'
+  | 'outline';
 
 export type GlowColor = 'none' | 'neon pink' | 'cyan' | 'green' | 'gold' | 'violet' | 'white';
 
@@ -46,7 +56,18 @@ export type CharsetName =
   | 'minimal'
   | 'custom';
 
-export type Shape3D = 'torus' | 'cube' | 'sphere' | 'pyramid' | 'dna';
+export type Shape3D = 
+  | 'textRing'
+  | 'textBanner'
+  | 'torus'
+  | 'cube'
+  | 'sphere'
+  | 'diamond'
+  | 'tunnel'
+  | 'heart'
+  | 'star'
+  | 'dna'
+  | 'pyramid';
 
 export interface ColorRGB {
   r: number;
@@ -100,6 +121,7 @@ export interface AppState {
   
   // 3D state
   shape3D: Shape3D;
+  text3D: string;
   rotationSpeed: number;
   zoom3D: number;
   wireframe3D: boolean;
