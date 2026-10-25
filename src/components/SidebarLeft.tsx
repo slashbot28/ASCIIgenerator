@@ -11,10 +11,15 @@ import {
   Paintbrush,
   Eraser,
   PaintBucket,
-  Trash2
+  Trash2,
+  Play,
+  Pause,
+  Sparkles,
+  Compass
 } from 'lucide-react';
-import type { AppState, CharsetName, Shape3D, TextTab } from '../types';
+import type { AppState, CharsetName, Shape3D, TextTab, MotionType } from '../types';
 import { ASCII_FONTS } from '../utils/figletFonts';
+import { DEMO_PRESETS } from '../utils/effectPresets';
 
 interface SidebarLeftProps {
   state: AppState;
@@ -277,26 +282,39 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
 
           {state.textTab === 'style' && (
             <div className="flex flex-col gap-3 font-mono">
-              <label className="text-[11px] text-[#8ea291]">Preset Stijlen</label>
-              <div className="grid grid-cols-2 gap-1.5 text-xs">
-                {[
-                  { name: 'Retro Synth', theme: 'synthwave', effect: '3d', glow: 'neon pink' },
-                  { name: 'Cyber Hacker', theme: 'matrix', effect: 'glow', glow: 'green' },
-                  { name: 'Golden Glow', theme: 'gold', effect: '3d', glow: 'gold' },
-                  { name: 'Rainbow Pop', theme: 'rainbow', effect: '3d', glow: 'neon pink' },
-                  { name: 'Cyberpunk 2077', theme: 'cyberpunk', effect: 'glow', glow: 'cyan' },
-                  { name: 'Clean White', theme: 'monochrome', effect: 'none', glow: 'none' }
-                ].map((preset, i) => (
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-[#f5a623] font-bold flex items-center gap-1.5">
+                  <Sparkles size={13} />
+                  <span>5 Kant-en-Klare Demo Presets</span>
+                </label>
+                <span className="text-[9px] text-[#6e8473]">1-klik demo</span>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {DEMO_PRESETS.map((p) => (
                   <button
-                    key={i}
+                    key={p.id}
                     onClick={() => updateState({
-                      colorTheme: preset.theme as any,
-                      effect: preset.effect as any,
-                      glow: preset.glow as any
+                      colorTheme: p.colorTheme,
+                      direction: p.direction,
+                      effect: p.effect,
+                      glow: p.glow,
+                      motionType: p.motionType,
+                      motionSpeed: p.motionSpeed,
+                      animation: p.animation,
+                      font: p.font || state.font,
+                      isDemoPlaying: true
                     })}
-                    className="p-2 bg-[#162018] hover:bg-[#1d2a1f] border border-[#273729] rounded text-left text-[#c4d4c6] hover:text-[#f5a623] transition-colors"
+                    className="p-2.5 bg-[#162018] hover:bg-[#1f2d21] border border-[#273729] hover:border-[#f5a623] rounded-lg text-left transition-all group"
                   >
-                    <div className="font-semibold">{preset.name}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#e6f2e4] group-hover:text-[#f5a623] flex items-center gap-1.5">
+                        <span>{p.icon}</span>
+                        <span>{p.name}</span>
+                      </span>
+                      <span className="text-[9px] text-[#3ee087] uppercase font-semibold">Demo</span>
+                    </div>
+                    <p className="text-[10px] text-[#809684] mt-0.5 leading-snug">{p.desc}</p>
                   </button>
                 ))}
               </div>
@@ -304,28 +322,89 @@ export const SidebarLeft: React.FC<SidebarLeftProps> = ({
           )}
 
           {state.textTab === 'animate' && (
-            <div className="flex flex-col gap-2 font-mono">
-              <label className="text-[11px] text-[#8ea291]">Animatie Effecten</label>
-              {[
-                { id: 'none', label: 'Geen animatie' },
-                { id: 'rainbow-cycle', label: 'Rainbow Cyclus (Kleurloop)' },
-                { id: 'wave', label: 'Wave Golfbeweging' },
-                { id: 'pulse', label: 'Pulsar Gloed' },
-                { id: 'matrix-rain', label: 'Matrix Rain Flicker' },
-                { id: 'glitch', label: 'Cyber Glitch' }
-              ].map(anim => (
-                <button
-                  key={anim.id}
-                  onClick={() => updateState({ animation: anim.id as any })}
-                  className={`p-2 text-left text-xs rounded border transition-all ${
-                    state.animation === anim.id
-                      ? 'bg-[#1d291f] text-[#3ee087] border-[#3ee087]'
-                      : 'bg-[#151c16] text-[#9bb0a0] border-[#253527] hover:border-[#384c3a]'
-                  }`}
-                >
-                  {anim.label}
-                </button>
-              ))}
+            <div className="flex flex-col gap-3 font-mono">
+              {/* Motion, Rotate & Zoom Controls */}
+              <div className="flex flex-col gap-2 p-2.5 rounded-lg bg-[#162018] border border-[#2c3d2e]">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] text-[#f5a623] font-bold flex items-center gap-1">
+                    <Compass size={13} />
+                    <span>Bewegen, Roteren & Zoomen</span>
+                  </label>
+                  <button
+                    onClick={() => updateState({ isDemoPlaying: !state.isDemoPlaying })}
+                    className="flex items-center gap-1 text-[10px] text-[#3ee087] hover:underline font-semibold"
+                  >
+                    {state.isDemoPlaying ? <Pause size={10} /> : <Play size={10} />}
+                    <span>{state.isDemoPlaying ? 'Pauzeer' : 'Start'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'none', label: 'Stilstaand' },
+                    { id: 'float', label: '🌊 Zweven' },
+                    { id: 'rotate', label: '🔄 360° Spin' },
+                    { id: 'zoom-pulse', label: '🔍 In/Uit Zoom' },
+                    { id: 'orbit', label: '🪐 3D Orbit' },
+                    { id: 'hyperspace', label: '🚀 Hyperspace' }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => updateState({ motionType: m.id as MotionType, isDemoPlaying: true })}
+                      className={`p-1.5 text-center text-xs rounded border transition-all ${
+                        state.motionType === m.id
+                          ? 'bg-[#1e2a20] text-[#f5a623] border-[#f5a623] font-semibold'
+                          : 'bg-[#121813] text-[#8ea291] border-[#253527] hover:border-[#384c3a]'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-[#223024]">
+                  <div className="flex justify-between text-[10px] text-[#8ea291]">
+                    <span>Snelheid</span>
+                    <span className="text-[#f5a623]">{state.motionSpeed.toFixed(1)}x</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.4" 
+                    max="2.5" 
+                    step="0.1"
+                    value={state.motionSpeed}
+                    onChange={(e) => updateState({ motionSpeed: Number(e.target.value) })}
+                    className="accent-[#f5a623] h-1.5 bg-[#121813] rounded"
+                  />
+                </div>
+              </div>
+
+              {/* Color Animation Loops */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] text-[#8ea291]">Kleurloop / Effect Loop</label>
+                <div className="grid grid-cols-2 gap-1">
+                  {[
+                    { id: 'none', label: 'Geen loop' },
+                    { id: 'rainbow-cycle', label: 'Rainbow Cyclus' },
+                    { id: 'wave', label: 'Wave Golf' },
+                    { id: 'pulse', label: 'Pulsar Gloed' },
+                    { id: 'matrix-rain', label: 'Matrix Rain' },
+                    { id: 'glitch', label: 'Cyber Glitch' }
+                  ].map(anim => (
+                    <button
+                      key={anim.id}
+                      onClick={() => updateState({ animation: anim.id as any })}
+                      className={`p-1.5 text-left text-xs rounded border transition-all truncate ${
+                        state.animation === anim.id
+                          ? 'bg-[#1d291f] text-[#3ee087] border-[#3ee087]'
+                          : 'bg-[#151c16] text-[#9bb0a0] border-[#253527] hover:border-[#384c3a]'
+                      }`}
+                    >
+                      {anim.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

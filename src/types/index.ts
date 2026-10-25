@@ -42,6 +42,14 @@ export type EffectType =
 
 export type GlowColor = 'none' | 'neon pink' | 'cyan' | 'green' | 'gold' | 'violet' | 'white';
 
+export type MotionType = 
+  | 'none'
+  | 'float'
+  | 'rotate'
+  | 'zoom-pulse'
+  | 'orbit'
+  | 'hyperspace';
+
 export type CharsetName = 
   | 'classic'
   | 'detailed'
@@ -81,6 +89,21 @@ export interface AsciiCell {
   glow?: string;
 }
 
+export interface EffectPreset {
+  id: string;
+  name: string;
+  desc: string;
+  icon: string;
+  colorTheme: ColorTheme;
+  direction: GradientDirection;
+  effect: EffectType;
+  glow: GlowColor;
+  motionType: MotionType;
+  motionSpeed: number;
+  animation: 'none' | 'rainbow-cycle' | 'wave' | 'pulse' | 'matrix-rain' | 'glitch';
+  font?: string;
+}
+
 export interface AppState {
   mode: ConverterMode;
   lang: 'nl' | 'en';
@@ -94,6 +117,11 @@ export interface AppState {
   lineHeight: number;
   textAlign: 'left' | 'center' | 'right';
   animation: 'none' | 'rainbow-cycle' | 'wave' | 'pulse' | 'matrix-rain' | 'glitch';
+  
+  // Motion & Animation Demo
+  motionType: MotionType;
+  motionSpeed: number;
+  isDemoPlaying: boolean;
   
   // Quick Ribbon state
   colorTheme: ColorTheme;

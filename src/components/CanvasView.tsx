@@ -17,7 +17,8 @@ import {
   MessageSquare,
   RotateCcw,
   Play,
-  Pause
+  Pause,
+  Globe
 } from 'lucide-react';
 import type { 
   AppState, 
@@ -25,7 +26,8 @@ import type {
   GradientDirection, 
   EffectType, 
   GlowColor, 
-  AsciiCell 
+  AsciiCell,
+  MotionType 
 } from '../types';
 import { 
   copyPlainText, 
@@ -35,6 +37,7 @@ import {
   downloadWebP, 
   downloadSvg, 
   downloadTextFile,
+  downloadAnimatedHtml,
   recordWebmVideo,
   exportAnimatedGif
 } from '../utils/exportUtils';
@@ -81,6 +84,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
     'none', '3d', 'glow', 'glitch', 'emboss', 'shadow', 'hologram', 'fire', 'chroma', 'outline'
   ];
   const GLOWS: GlowColor[] = ['none', 'neon pink', 'cyan', 'green', 'gold', 'violet', 'white'];
+  const MOTIONS: MotionType[] = ['none', 'float', 'rotate', 'zoom-pulse', 'orbit', 'hyperspace'];
 
   const cyclePrev = <T,>(arr: T[], current: T, setter: (val: T) => void) => {
     const idx = arr.indexOf(current);
@@ -138,6 +142,20 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
 
   const handleDownloadTxt = () => {
     downloadTextFile(rawAsciiText, `asciicraft-${state.mode}.txt`);
+  };
+
+  const handleDownloadAnimatedHtml = () => {
+    downloadAnimatedHtml(
+      asciiGrid,
+      {
+        motionType: state.motionType,
+        motionSpeed: state.motionSpeed,
+        effect: state.effect,
+        glow: state.glow,
+        title: state.text || 'ASCIICraft Demo'
+      },
+      `asciicraft-demo-${state.motionType}.html`
+    );
   };
 
   // Export GIF
@@ -343,6 +361,43 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
             </div>
           </div>
 
+          {/* BEWEGING / MOTION (Demo Maker) */}
+          <div className="flex items-center gap-1.5 text-xs font-mono">
+            <span className="text-[10px] text-[#f5a623] uppercase tracking-wider font-semibold">BEWEGING</span>
+            <div className="flex items-center bg-[#162018] border border-[#28382a] rounded px-1 py-0.5">
+              <button 
+                onClick={() => cyclePrev(MOTIONS, state.motionType, (m) => updateState({ motionType: m }))}
+                className="p-1 hover:text-[#f5a623] text-[#7d9382]"
+              >
+                <ChevronLeft size={13} />
+              </button>
+              <span className="px-2 text-[#e6f2e4] text-xs font-medium min-w-[80px] text-center capitalize">
+                {state.motionType}
+              </span>
+              <button 
+                onClick={() => cycleNext(MOTIONS, state.motionType, (m) => updateState({ motionType: m }))}
+                className="p-1 hover:text-[#f5a623] text-[#7d9382]"
+              >
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Demo Animation Play/Pause Toggle */}
+          {state.motionType !== 'none' && (
+            <button 
+              onClick={() => updateState({ isDemoPlaying: !state.isDemoPlaying })}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono border transition-all ${
+                state.isDemoPlaying 
+                  ? 'bg-[#1e2a20] text-[#3ee087] border-[#3e5642]' 
+                  : 'bg-[#151c16] text-[#7d9382] border-[#253527]'
+              }`}
+            >
+              {state.isDemoPlaying ? <Pause size={12} /> : <Play size={12} />}
+              <span>{state.isDemoPlaying ? 'Pauzeer Demo' : 'Start Demo'}</span>
+            </button>
+          )}
+
           {/* 3D Spin Toggle (Only in 3D Mode) */}
           {state.mode === '3d' && (
             <button 
@@ -379,6 +434,16 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
           >
             {copiedText ? <Check size={13} className="text-[#3ee087]" /> : <Copy size={13} className="text-[#9bb0a0]" />}
             <span>{copiedText ? 'Gekopieerd!' : 'Kopieer'}</span>
+          </button>
+
+          {/* Standalone Animated HTML Demo Export */}
+          <button 
+            onClick={handleDownloadAnimatedHtml}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#19261c] hover:bg-[#233527] border border-[#2e5237] text-xs font-mono text-[#3ee087] transition-all hover:shadow-[0_0_10px_rgba(62,224,135,0.3)]"
+            title="Exporteer als interactieve standalone geanimeerde HTML pagina"
+          >
+            <Globe size={13} className="text-[#3ee087]" />
+            <span>Demo HTML</span>
           </button>
 
           {/* HTML kopiëren */}
@@ -537,9 +602,14 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
             className="flex items-center justify-center"
           >
             <pre 
-              style={getGlowStyle()}
+              style={{
+                ...getGlowStyle(),
+                animationDuration: `${(4 / Math.max(0.2, state.motionSpeed)).toFixed(2)}s`
+              }}
               className={`font-mono text-sm leading-[1.1] tracking-normal select-text whitespace-pre ${getEffectClass()} ${
                 state.animation === 'pulse' ? 'animate-pulse' : ''
+              } ${
+                state.isDemoPlaying && state.motionType !== 'none' ? `motion-${state.motionType}` : ''
               }`}
             >
               {asciiGrid.map((row, rIdx) => (

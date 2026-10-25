@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti';
 import gifshot from 'gifshot';
-import type { AsciiCell, EffectType, GlowColor } from '../types';
+import type { AsciiCell, EffectType, GlowColor, MotionType } from '../types';
 
 export function fireConfetti() {
   try {
@@ -436,3 +436,257 @@ export async function exportAnimatedGif(
     );
   });
 }
+
+// Generate Standalone Animated HTML Document
+export function generateAnimatedHtmlDocument(
+  grid: AsciiCell[][],
+  options: {
+    motionType?: MotionType;
+    motionSpeed?: number;
+    effect?: EffectType;
+    glow?: GlowColor;
+    title?: string;
+  } = {}
+): string {
+  const {
+    motionType = 'orbit',
+    motionSpeed = 1,
+    effect = 'chroma',
+    glow = 'neon pink',
+    title = 'ASCIICraft Demo'
+  } = options;
+
+  const glowStyles: Record<GlowColor, string> = {
+    'none': '',
+    'neon pink': 'text-shadow: 0 0 10px rgba(244, 63, 142, 0.8), 0 0 25px rgba(244, 63, 142, 0.4);',
+    'cyan': 'text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 25px rgba(6, 182, 212, 0.4);',
+    'green': 'text-shadow: 0 0 10px rgba(62, 224, 135, 0.8), 0 0 25px rgba(62, 224, 135, 0.4);',
+    'gold': 'text-shadow: 0 0 10px rgba(245, 166, 35, 0.8), 0 0 25px rgba(245, 166, 35, 0.4);',
+    'violet': 'text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 25px rgba(168, 85, 247, 0.4);',
+    'white': 'text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.3);'
+  };
+
+  const effectCss: Record<EffectType, string> = {
+    'none': '',
+    '3d': 'text-shadow: 1px 1px 0px rgba(0,0,0,0.8), 2px 2px 0px rgba(0,0,0,0.7), 3px 3px 0px rgba(0,0,0,0.6), 4px 4px 6px rgba(0,0,0,0.9);',
+    'glow': 'filter: drop-shadow(0 0 8px currentColor);',
+    'glitch': 'filter: contrast(150%) hue-rotate(90deg);',
+    'emboss': 'text-shadow: -1px -1px 1px rgba(255,255,255,0.3), 1px 1px 1px rgba(0,0,0,0.8);',
+    'shadow': 'text-shadow: 3px 3px 6px rgba(0,0,0,0.9), 5px 5px 12px rgba(0,0,0,0.8);',
+    'hologram': 'text-shadow: 0 0 8px rgba(6, 182, 212, 0.8), 0 0 16px rgba(6, 182, 212, 0.4); letter-spacing: 1px;',
+    'fire': 'text-shadow: 0 -2px 4px #ffcc00, 0 -4px 8px #ff6600, 0 -8px 12px #cc0000;',
+    'chroma': 'text-shadow: -2px 0 0 rgba(239, 68, 68, 0.85), 2px 0 0 rgba(6, 182, 212, 0.85);',
+    'outline': 'text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'
+  };
+
+  const animDuration = (4 / Math.max(0.2, motionSpeed)).toFixed(2);
+
+  // Generate ASCII pre content
+  let bodyContent = '';
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell.char === ' ') {
+        bodyContent += ' ';
+      } else {
+        bodyContent += `<span style="color:${cell.color || '#3ee087'}">${cell.char}</span>`;
+      }
+    }
+    bodyContent += '\n';
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} | ASCIICraft Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0e1310;
+      color: #c7d5c5;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* CRT Scanlines */
+    body::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                  linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .viewport {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 900px;
+      padding: 40px;
+      width: 100%;
+      height: 85vh;
+    }
+
+    pre.ascii-art {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 700;
+      white-space: pre;
+      user-select: text;
+      transition: transform 0.1s linear;
+      ${glowStyles[glow] || ''}
+      ${effectCss[effect] || ''}
+    }
+
+    /* Motion Animations */
+    @keyframes ascii-float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25% { transform: translateY(-16px) rotate(-1.5deg); }
+      75% { transform: translateY(12px) rotate(1.5deg); }
+    }
+
+    @keyframes ascii-rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes ascii-zoom-pulse {
+      0%, 100% { transform: scale(0.85); }
+      50% { transform: scale(1.22); }
+    }
+
+    @keyframes ascii-orbit {
+      0% { transform: perspective(900px) rotateX(18deg) rotateY(0deg) scale(0.92); }
+      50% { transform: perspective(900px) rotateX(-18deg) rotateY(180deg) scale(1.15); }
+      100% { transform: perspective(900px) rotateX(18deg) rotateY(360deg) scale(0.92); }
+    }
+
+    @keyframes ascii-hyperspace {
+      0% { transform: scale(0.35) rotate(-6deg); opacity: 0.5; }
+      50% { transform: scale(1.35) rotate(6deg); opacity: 1; }
+      100% { transform: scale(0.35) rotate(-6deg); opacity: 0.5; }
+    }
+
+    .motion-float { animation: ascii-float ${animDuration}s ease-in-out infinite; }
+    .motion-rotate { animation: ascii-rotate ${animDuration}s linear infinite; }
+    .motion-zoom-pulse { animation: ascii-zoom-pulse ${animDuration}s ease-in-out infinite; }
+    .motion-orbit { animation: ascii-orbit ${animDuration}s ease-in-out infinite; transform-style: preserve-3d; }
+    .motion-hyperspace { animation: ascii-hyperspace ${animDuration}s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+    .paused { animation-play-state: paused !important; }
+
+    /* Control Bar */
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      background: rgba(19, 25, 20, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid #27372b;
+      border-radius: 9999px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 20;
+      font-size: 12px;
+      color: #9bb0a0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .controls button {
+      background: #162018;
+      border: 1px solid #2d402f;
+      color: #e6f2e4;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .controls button:hover {
+      background: #223325;
+      border-color: #f5a623;
+      color: #f5a623;
+    }
+
+    .branding {
+      color: #f5a623;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="viewport">
+    <pre id="art" class="ascii-art ${motionType !== 'none' ? `motion-${motionType}` : ''}">${bodyContent}</pre>
+  </div>
+
+  <div class="controls">
+    <span class="branding">⌘ ASCIICRAFT</span>
+    <button id="toggleBtn" onclick="togglePlay()">⏸ Pauzeer</button>
+    <button onclick="setSpeed(0.5)">0.5x</button>
+    <button onclick="setSpeed(1.0)">1.0x</button>
+    <button onclick="setSpeed(1.8)">1.8x</button>
+    <button onclick="document.documentElement.requestFullscreen()">⛶ Fullscreen</button>
+  </div>
+
+  <script>
+    const art = document.getElementById('art');
+    const toggleBtn = document.getElementById('toggleBtn');
+    let isPlaying = true;
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      art.classList.toggle('paused', !isPlaying);
+      toggleBtn.innerText = isPlaying ? '⏸ Pauzeer' : '▶ Afspelen';
+    }
+
+    function setSpeed(multiplier) {
+      const baseSec = ${animDuration};
+      const newSec = (baseSec / multiplier).toFixed(2);
+      art.style.animationDuration = newSec + 's';
+    }
+  </script>
+</body>
+</html>`;
+}
+
+// Download Standalone Animated HTML File
+export function downloadAnimatedHtml(
+  grid: AsciiCell[][],
+  options: {
+    motionType?: MotionType;
+    motionSpeed?: number;
+    effect?: EffectType;
+    glow?: GlowColor;
+    title?: string;
+  } = {},
+  filename = 'asciicraft-demo.html'
+) {
+  const htmlContent = generateAnimatedHtmlDocument(grid, options);
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  fireConfetti();
+}
+

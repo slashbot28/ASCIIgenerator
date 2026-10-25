@@ -39,6 +39,11 @@ export function App() {
     textAlign: 'center',
     animation: 'none',
 
+    // Motion & Animation Demo
+    motionType: 'orbit',
+    motionSpeed: 1,
+    isDemoPlaying: true,
+
     // Quick Ribbon state
     colorTheme: 'rainbow',
     direction: 'horizontal',
